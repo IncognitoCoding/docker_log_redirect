@@ -44,8 +44,7 @@ def get_docker_log(container_name, container_logger, root_logger):
     """
 
     # Sets processing args.
-    #processing_args = ['docker', 'logs', '-f', container_name]
-    processing_args = ['tracert', '8.8.8.8']
+    processing_args = ['docker', 'logs', '-f', container_name]
 
     root_logger.debug(f'Starting to redirect the docker container logs for {container_name}')
     root_logger.debug(f'Processing agruments = {processing_args}')
