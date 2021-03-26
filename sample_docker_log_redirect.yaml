@@ -34,7 +34,6 @@ email:
   # True: enabled, False: disabled
   alert_program_errors: True
 
-
 logging:
   #Sets logging format option
   # Option 1 = Default
@@ -66,3 +65,5 @@ logging:
   # Used for issue tracking and program log
   # Default 1000000 Bytes (1 Megabyte)
   max_log_file_size: 1000000
+  # Rolling over log file on startup
+  rollover: False

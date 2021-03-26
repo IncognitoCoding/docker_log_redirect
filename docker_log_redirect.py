@@ -28,7 +28,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.1'
+__version__ = '0.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -44,7 +44,8 @@ def get_docker_log(container_name, container_logger, root_logger):
     """
 
     # Sets processing args.
-    processing_args = ['docker', 'logs', '-f', container_name]
+    #processing_args = ['docker', 'logs', '-f', container_name]
+    processing_args = ['tracert', '8.8.8.8']
 
     root_logger.debug(f'Starting to redirect the docker container logs for {container_name}')
     root_logger.debug(f'Processing agruments = {processing_args}')
@@ -146,6 +147,10 @@ def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_
     """
     Creates individual docker container loggers for each redirected log docker container.
 
+    Rollover enabled on the redirected docker log files. Docker logs on initial startup can contain 
+    hundreds of lines of output. The rollover will ensure the latest redirect are in the main log file. 
+    Some duplicate entries may exist between the rolled-over and the new log.
+
     Args:
         config_yaml_read (yaml): read in YAML configuration
         central_log_path (str): centralized log output directory for all docker container log redirect files
@@ -200,9 +205,11 @@ def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_
             logging_handler_option = 2
             # Sets backup copy count
             logging_backup_log_count = 4
+            # Sets rollover
+            rollover = True
 
             # Calls function to setup logging and create the tracker logger.
-            container_logger = create_logger(central_log_path, logger_name, container_log_name, max_log_file_size, file_log_level, console_log_level, logging_backup_log_count, logging_format_option, logging_handler_option)
+            container_logger = create_logger(central_log_path, logger_name, container_log_name, max_log_file_size, file_log_level, console_log_level, logging_backup_log_count, logging_format_option, logging_handler_option, rollover)
 
             # Takes the docker container name/logger and creates a single multidimensional list entry.
             docker_container_loggers.append([container_name, container_logger])
@@ -328,12 +335,15 @@ def populate_startup_variables():
         logging_handler_option = returned_yaml_read_config.get('logging', {}).get('logging_handler_option')
         # Sets the backup count.
         logging_backup_log_count = returned_yaml_read_config.get('logging', {}).get('logging_backup_log_count')
+        # Sets the rollover option.
+        rollover = returned_yaml_read_config.get('logging', {}).get('rollover')
 
         # Validates the YAML value.
         yaml_value_validation('file_log_level', file_log_level, str)
         yaml_value_validation('console_log_level', console_log_level, str)
         yaml_value_validation('logging_handler_option', logging_handler_option, int)
         yaml_value_validation('logging_backup_log_count', logging_backup_log_count, int)
+        yaml_value_validation('rollover', rollover, bool)
 
         # Sets LoggingFormatOption entry type based on input.
         # Checks if user entered a custom format or selected a pre-configured option.
@@ -349,7 +359,7 @@ def populate_startup_variables():
             logging_format_option = int(logging_format_option)
             
         # Calls function to setup logging and create the root logger.
-        root_logger = create_logger(central_log_path, logger_name, log_name, max_log_file_size, file_log_level, console_log_level, logging_backup_log_count, logging_format_option, logging_handler_option)
+        root_logger = create_logger(central_log_path, logger_name, log_name, max_log_file_size, file_log_level, console_log_level, logging_backup_log_count, logging_format_option, logging_handler_option, rollover)
         
         # Sets the tracker_logger to the startup_variable dictionary.
         startup_variables['root_logger'] = root_logger

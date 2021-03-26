@@ -1,4 +1,4 @@
-*.log
+logs/
 venv/
 docker_log_redirect.yaml
 sample_search/
