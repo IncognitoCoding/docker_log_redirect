@@ -530,5 +530,5 @@ if __name__ == "__main__":
         # Calls main function.
         main()
         
-        # 1 second delay sleep to prevent system resource issues if the function fails and the loop runs without any pause.
-        time.sleep(5)
+        # 1-hour delay sleep. Each hour the program will check that the threads are still running and the docker container logs are redirecting.
+        time.sleep(3600)
