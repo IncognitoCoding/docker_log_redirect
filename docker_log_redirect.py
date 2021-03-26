@@ -44,7 +44,8 @@ def get_docker_log(container_name, container_logger, root_logger):
     """
 
     # Sets processing args.
-    processing_args = ['docker', 'logs', '-f', container_name]
+    #processing_args = ['docker', 'logs', '-f', container_name]
+    processing_args = ['tracert', '8.8.8.8']
 
     root_logger.debug(f'Starting to redirect the docker container logs for {container_name}')
     root_logger.debug(f'Processing agruments = {processing_args}')
@@ -54,15 +55,13 @@ def get_docker_log(container_name, container_logger, root_logger):
         # Runs the subprocess and returns output
         output = subprocess.Popen(processing_args,stdout=subprocess.PIPE)
 
-        # Reads through each standard output line.
-        for line in io.TextIOWrapper(output.stdout, encoding="utf-8"):
+        # Waits as during send pauses. This configuration is required over TextIOWrapper because docker logs can have long breaks between output.
+        while output.poll() is None:
 
-            # Adds docker container output to the log.
-            container_logger.info(line.rstrip())
+            # Writes formated output to log file.
+            container_logger.info(output.stdout.readline().decode('utf-8').strip())
 
         root_logger.debug(f'The docker container logs for {container_name} have stopped outputting. This can happen with the docker container stops running')
-
-        root_logger.debug(f'Closing the logger for {container_name}')
 
     except Exception as err:
         raise ValueError(f'The sub-process failed to run. {err}, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
@@ -137,9 +136,6 @@ def create_docker_log_threads(docker_container_loggers, root_logger):
 
         else:
             root_logger.info(f'The thread ({thread_name}) is still running for {container_name}. No action required')
-
-            
-    root_logger.debug(f'Closing the root_logger')
 
     return thread_start_tracker
 
@@ -507,6 +503,8 @@ def main():
         root_logger.error('Exiting because of the exception error....')
 
         exit()
+
+    root_logger.info('The main program will sleep for 1 hour and validate the docker log redirect threads are still running.')
 
 
 # Checks that this is the main program initiates the classes to start the functions.
