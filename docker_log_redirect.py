@@ -17,11 +17,11 @@ import subprocess
 import io
 
 # Libraries
-from ictools.directors.thread_director import start_function_thread
-from ictools.directors.yaml_director import read_yaml_config
-from ictools.directors.yaml_director import yaml_value_validation
-from ictools.directors.log_director import create_logger
-from ictools.directors.email_director import send_email
+from ictoolkit.directors.thread_director import start_function_thread
+from ictoolkit.directors.yaml_director import read_yaml_config
+from ictoolkit.directors.yaml_director import yaml_value_validation
+from ictoolkit.directors.log_director import create_logger
+from ictoolkit.directors.email_director import send_email
 from functools import partial
 
 __author__ = 'IncognitoCoding'
