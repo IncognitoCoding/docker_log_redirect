@@ -1,0 +1,68 @@
+general:
+  # True or False
+  email_alerts: True
+  # Sends email alerts with program crashes
+  # True: enabled, False: disabled
+  alert_program_errors: True
+  # Path to save all program and docker container logs.
+  central_log_path: '<your full log path>'
+
+docker_container:
+  docker_container1:
+    # Add the software container_name
+    container_name: 'MySoftware1'
+    log_name: 'sample1.log'
+  docker_container2:
+    # Add the software container_name
+    container_name: 'MySoftware2'
+    log_name: 'sample2.log'
+  # Add any additional software entries below and increase the nubmer by 1
+  # Requires: container_name, log_name, and info_search
+
+email:
+  smtp: smtp.yourdomain.com
+  # True or False
+  authentication_required: False
+  username: SMTP_username
+  # Leave blank if not required
+  password: SMTP_password
+  #True: Use TLS on port 587, False: Standard port 25
+  use_tls: False
+  from_email: alerts@monitoring.me
+  to_email: youremail@monitoring.me
+  # Sends email alerts with program crashes
+  # True: enabled, False: disabled
+  alert_program_errors: True
+
+
+logging:
+  #Sets logging format option
+  # Option 1 = Default
+  # Options:
+  #   1 - '%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,  Line:%(lineno)s)',datefmt='%Y-%m-%d %H:%M:%S'
+  #   2 - '%(message)s'
+  #   '%(asctime)s|%(levelname)s|%(funcName)s|%(message)s' - Manual Entry
+  logging_format_option: 1
+  # Sets handler option
+  # Option 1 = Default
+  #   1 - Both
+  #   2 - File Handler
+  #   3 - Console Handler
+  logging_handler_option: 1
+  # Sets backup copy count
+  logging_backup_log_count: 3
+  # Sets logging level
+  # Configure based on the LoggingHandlerOption option
+  # Options:
+  #   - NOTSET
+  #   - DEBUG
+  #   - INFO
+  #   - WARNING
+  #   - ERROR
+  #   - CRITICAL
+  file_log_level: INFO
+  console_log_level: INFO
+  # Sets max log size in bytes
+  # Used for issue tracking and program log
+  # Default 1000000 Bytes (1 Megabyte)
+  max_log_file_size: 1000000
