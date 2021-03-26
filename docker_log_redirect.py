@@ -50,15 +50,18 @@ def get_docker_log(container_name, container_logger, root_logger):
     root_logger.debug(f'Processing agruments = {processing_args}')
 
     try:
+        
+        # Runs the subprocess and returns the output from the docker log file and will continue to process new log entries.
+        output = subprocess.Popen(processing_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
-        # Runs the subprocess and returns output
-        output = subprocess.Popen(processing_args,stdout=subprocess.PIPE)
+        # Loops through each log entry as the value is received from the subprocess.
+        for line in iter(output.stdout.readline,''):
 
-        # Waits as during send pauses. This configuration is required over TextIOWrapper because docker logs can have long breaks between output.
-        while output.poll() is None:
+            # Removes all trailing characters from the log entry.
+            line = line.rstrip()
 
             # Writes formated output to log file.
-            container_logger.info(output.stdout.readline().decode('utf-8').strip())
+            container_logger.info(line)
 
         root_logger.debug(f'The docker container logs for {container_name} have stopped outputting. This can happen with the docker container stops running')
 
