@@ -1,7 +1,7 @@
 # docker_log_redirect
  
 # Overview:
-docker_log_redirect offers you the ability to quickly set up and centralize all of your logs into one central directory. All configuration is set up through a simple to use YAML configuration file, and you can add as many docker containers log redirect entries as you would like to centralize. 
+docker_log_redirect offers you the ability to quickly set up and centralize all of your logs into one central directory. All configuration is set up through a simple to use YAML configuration file, and you can add as many docker containers log redirect entries as you would like to centralize. No modifications to your docker containers or configuration are required.
 
 If you would like to alert on these centralized docker logs, check out [software_log_monitor] (https://github.com/IncognitoCoding/software_log_monitor). 
 
@@ -41,6 +41,7 @@ The sample YAML configuration file has plenty of notes to help explain the setup
             Step 4.2.1:  Create a new service file.
                 Run: cd /lib/systemd/system
                 Run: sudo nano docker_log_redirect.service
+                    Note: The service account needs to have docker socket access. The root user is added below as an example.
                     Paste:
                         Description=docker_log_redirect
                         After=multi-user.target
