@@ -30,9 +30,6 @@ email:
   use_tls: False
   from_email: alerts@monitoring.me
   to_email: youremail@monitoring.me
-  # Sends email alerts with program crashes
-  # True: enabled, False: disabled
-  alert_program_errors: True
 
 logging:
   #Sets logging format option
