@@ -120,9 +120,6 @@ def create_docker_log_threads(docker_container_loggers, root_logger):
             except Exception as err:
                 raise ValueError(f'{err}, Error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
 
-            # Sleeps 5 seconds to allow startup.
-            #time.sleep(1)
-
             # Validates the start_decryptor_site companion program started.
             if thread_name in str(threading.enumerate()):
                 root_logger.info(f'The docker container log capture has started for {container_name}. Thread name = {thread_name}')
