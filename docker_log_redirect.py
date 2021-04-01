@@ -49,7 +49,7 @@ def get_docker_log(container_name, container_logger, exclude, root_logger):
     processing_args = ['docker', 'logs', '-f', container_name]
 
     root_logger.debug(f'Starting to redirect the docker container logs for {container_name}')
-    root_logger.debug(f'Processing agruments = {processing_args}')
+    root_logger.debug(f'Processing agruments = {processing_args}. If the docker container is not running, it will take a minute to timeout. Please wait...')
 
     try:
         
@@ -96,8 +96,6 @@ def get_docker_log(container_name, container_logger, exclude, root_logger):
 
                 # Writes formated output to log file.
                 container_logger.info(line)
-
-        root_logger.debug(f'The docker container logs for {container_name} have stopped outputting. This can happen with the docker container stops running')
 
     except Exception as err:
         raise ValueError(f'The sub-process failed to run. {err}, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
@@ -534,16 +532,19 @@ def main():
             try:
                 
                 # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific email. Timeouts on the thread do not mean the program needs to stop because other threads may run.
-                if 'timeout has reached' in err:
+                if 'timeout has reached' in str(err):
                     
                     # Pulls the thread name using regex.
                     # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
                     # Result: transmission_thread
-                    thread_name = re.search(r"\(([A-Za-z0-9_]+)\)", err)
+                    result = re.search(r"\(([A-Za-z0-9_]+)\)", str(err))
+
+                    # Sets the matching result.
+                    thread_name = result.group(1)
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread {thread_name} have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
                 
                 else:
 
@@ -560,14 +561,17 @@ def main():
             root_logger.error('The user did not choose an option on sending program errors to email. Continuing to exit')
         
         # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific log. Timeouts on the thread do not mean the program needs to stop because other threads may run.
-        if 'timeout has reached' in err:
+        if 'timeout has reached' in str(err):
             
             # Pulls the thread name using regex.
             # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
             # Result: transmission_thread
-            thread_name = re.search(r"\(([A-Za-z0-9_]+)\)", err)
+            result = re.search(r"\(([A-Za-z0-9_]+)\)", str(err))
 
-            root_logger.error(f'The docker container logs for the thread {thread_name} have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour')
+            # Sets the matching result.
+            thread_name = result.group(1)
+
+            root_logger.error(f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour')
 
         else:
 
