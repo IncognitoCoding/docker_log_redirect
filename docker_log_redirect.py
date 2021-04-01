@@ -15,6 +15,7 @@ from threading import Thread
 from threading import Event
 import subprocess
 import io
+import re
 
 # Libraries
 from ictoolkit.directors.thread_director import start_function_thread
@@ -28,7 +29,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.3'
+__version__ = '0.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -494,7 +495,7 @@ def main():
             for index, value in enumerate(thread_status_of_dictionary):
                 
                 # Sets the status value to a variable. This is done to decrease the code complexity.
-                status =value.get('Status')
+                status = value.get('Status')
                 # Sets the container name value to a variable. This is done to decrease the code complexity.
                 container_name = value.get('container_name')
 
@@ -505,7 +506,7 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, f'Docker Log Redirect Event for {container_name}. Status = {status}', f'A docker redirect event has occured. Status of the docker log redirect = {status}', root_logger)  
+                    send_email(email_settings, f'Docker Log Redirect - The event for {container_name} has a status of [{status}]', f'A docker redirect event has occured. Status of the docker log redirect = {status}', root_logger)  
                 
                 else:
                     
@@ -532,9 +533,23 @@ def main():
             
             try:
                 
-                # Calls function to send the email.
-                # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                send_email(email_settings, "Docker Log Redirect Program Issue Occured", f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|Exception Thrown|{err}', root_logger)
+                # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific email. Timeouts on the thread do not mean the program needs to stop because other threads may run.
+                if 'timeout has reached' in err:
+                    
+                    # Pulls the thread name using regex.
+                    # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
+                    # Result: transmission_thread
+                    thread_name = re.search(r"\(([A-Za-z0-9_]+)\)", err)
+
+                    # Calls function to send the email.
+                    # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
+                    send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread {thread_name} have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
+                
+                else:
+
+                    # Calls function to send the email.
+                    # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
+                    send_email(email_settings, "Docker Log Redirect Program Issue Occured", f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|Exception Thrown|{err}', root_logger)
 
             except Exception as err:
                 root_logger.error(f'{err}')
@@ -543,10 +558,22 @@ def main():
             root_logger.debug(f'The user chooses not to send program errors to email')
         else:
             root_logger.error('The user did not choose an option on sending program errors to email. Continuing to exit')
+        
+        # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific log. Timeouts on the thread do not mean the program needs to stop because other threads may run.
+        if 'timeout has reached' in err:
+            
+            # Pulls the thread name using regex.
+            # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
+            # Result: transmission_thread
+            thread_name = re.search(r"\(([A-Za-z0-9_]+)\)", err)
 
-        root_logger.error('Exiting because of the exception error....')
+            root_logger.error(f'The docker container logs for the thread {thread_name} have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour')
 
-        exit()
+        else:
+
+            root_logger.error('Exiting because of the critical exception error. If the program is running as a service that autostarts, this error will continue to prompt after each restart')
+
+            exit()
 
     root_logger.info('The main program will sleep for 1 hour and validate the docker log redirect threads are still running.')
 
