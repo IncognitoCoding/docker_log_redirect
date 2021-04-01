@@ -7,6 +7,7 @@ If you would like to alert on these centralized docker logs, check out [software
 
 ## Program Highlights:
 * Dynamically add as many docker containers as you would like to redirect.
+* Option to exclude lines that match the keyword(s). Ideal for docker log output that is unneeded and creates clutter.
 * Each docker container redirect entry runs under its dedicated thread.
 * Email supports standard port 25 or TLS.
 * Email notification when docker redirect thread starts or fails.
