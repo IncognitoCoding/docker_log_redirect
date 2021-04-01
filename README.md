@@ -53,7 +53,7 @@ The sample YAML configuration file has plenty of notes to help explain the setup
                         User=root
                         WorkingDirectory=/<path to program>/docker_log_redirect
                         ExecStart=/usr/bin/python3  /<path to program>/docker_log_redirect/docker_log_redirect.py                                                         
-                        Restart=always
+                        Restart=no
 
                         [Install]
                         WantedBy=multi-user.target
