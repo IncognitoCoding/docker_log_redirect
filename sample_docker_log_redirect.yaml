@@ -12,10 +12,16 @@ docker_container:
     # Add the software container_name
     container_name: 'MySoftware1'
     log_name: 'sample1.log'
+    # (Optional): Exclude line with keywords. List format for multiple entries.
+    exclude: 'sample entry'
   docker_container2:
     # Add the software container_name
     container_name: 'MySoftware2'
     log_name: 'sample2.log'
+    # (Optional): Exclude line with keywords. List format for multiple entries.
+    exclude:
+      - 'sample entry1'
+      - 'sample entry2'
   # Add any additional software entries below and increase the nubmer by 1
   # Requires: container_name, log_name, and info_search
 

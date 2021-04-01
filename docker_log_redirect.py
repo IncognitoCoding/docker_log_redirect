@@ -28,18 +28,19 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.2'
+__version__ = '0.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
 
-def get_docker_log(container_name, container_logger, root_logger):
+def get_docker_log(container_name, container_logger, exclude, root_logger):
     """
     Runs a sub-process command to redirect the log output for the docker container.
 
     Args:
         container_name (str): docker container name
         container_logger (logger): docker container logger used for redirecting log output into a log file
+        exclude (str or list): exclude words to remove from the output. Can be in str or list format
         root_logger (logger): main root loggger
     """
 
@@ -60,8 +61,40 @@ def get_docker_log(container_name, container_logger, root_logger):
             # Removes all trailing characters from the log entry.
             line = line.rstrip()
 
-            # Writes formated output to log file.
-            container_logger.info(line)
+            # Checks if exclude is a str or list.
+            if isinstance(exclude, str):
+
+                # Checks that the line does not contain an exclude entry.
+                if exclude not in line:
+
+                    # Writes formated output to log file.
+                    container_logger.info(line)
+
+            elif isinstance(exclude, list):
+
+                # Assigns list variable to temporary hold matched excludes determining if the line should write.
+                matched_exclude = []
+
+                # Loops through each exclude entry.
+                for exclude_entry in exclude:
+
+                    # Checks if the line matches an exclude entry.
+                    if exclude_entry in line:
+
+                        # Adds the line to matched_exclude for final verification.
+                        # This entry is only used to validate if the list contains an entry.
+                        matched_exclude.append(line)
+
+                # Checks that the list is empty, which means no match was found.
+                if not matched_exclude:
+
+                    # Writes formated output to log file.
+                    container_logger.info(line)
+
+            elif exclude == None:
+
+                # Writes formated output to log file.
+                container_logger.info(line)
 
         root_logger.debug(f'The docker container logs for {container_name} have stopped outputting. This can happen with the docker container stops running')
 
@@ -92,9 +125,10 @@ def create_docker_log_threads(docker_container_loggers, root_logger):
     for docker_container in docker_container_loggers:
 
         # Sets easier to read variables from list.
-        # Entry Example: ['MySoftware1', <Logger MySoftware1 (Debug)>]
+        # Entry Example: ['MySoftware1', <Logger MySoftware1 (Debug)>, <exclude entry (str or list)>]
         container_name = docker_container[0]
         container_logger = docker_container[1]
+        exclude_entries = docker_container[2]
 
         # Replaces any spaces in the underscores for the thread name
         container_name = container_name.replace(" ", "_")
@@ -113,7 +147,7 @@ def create_docker_log_threads(docker_container_loggers, root_logger):
 
                 # This calls the get_docker_log function and passes the logger details to start monitor the docker container logs.
                 # You have to use functools for this to work correctly. Adding the function without functools will cause the function to start before being passed to the start_function_thread.
-                start_function_thread(partial(get_docker_log, container_name, container_logger, root_logger), thread_name, False)
+                start_function_thread(partial(get_docker_log, container_name, container_logger, exclude_entries, root_logger), thread_name, False)
                 
             except ValueError as err:
                 raise ValueError(f'{err}, Error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
@@ -141,7 +175,7 @@ def create_docker_log_threads(docker_container_loggers, root_logger):
 
 def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_file_size):
     """
-    Creates individual docker container loggers for each redirected log docker container.
+    Creates individual docker container loggers for each redirected log docker container. Each logger list will contain the loggers name and any optional exclude entries.
 
     Rollover enabled on the redirected docker log files. Docker logs on initial startup can contain 
     hundreds of lines of output. The rollover will ensure the latest redirect are in the main log file. 
@@ -157,8 +191,8 @@ def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_
         ValueError: The logger creation for the docker container ({container_name}) failed to create
 
     Returns:
-        list: a list of individual docker container loggers. Each line represents an individual docker container. The line will contain the docker container's name and the docker container logger
-            Element Example: ['MySoftware1', '<Logger MySoftware2 (Debug)>'']
+        list: a list of individual docker container loggers. Each line represents an individual docker container. The line will contain the docker container's name, the docker container logger, and optional exclude entries
+            Element Example: ['MySoftware1', '<Logger MySoftware2 (Debug)>', '<Exclude Entries (str or list)>]
     """
 
     # Assigns the docker container name and docker container logger to create a multidimensional list.
@@ -173,12 +207,14 @@ def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_
             # Gets software configuration settings from the yaml configuration.
             container_name = docker_container.get('container_name')
             log_name = docker_container.get('log_name')
+            exclude = docker_container.get('exclude')
 
         except Exception as err:
             raise ValueError(f'The YAML software entry section is missing the required keys. Please verify you have set all required keys and try again, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
 
         # Validates the YAML value.
         # Post-processing values are not required because these are optional settings.
+        # Optional exclude entries are not validated.
         yaml_value_validation(f'{key} nested key \'container_name\'', container_name, str)
         yaml_value_validation(f'{key} nested key \'log_name\'', log_name, str)
 
@@ -207,8 +243,8 @@ def create_docker_container_loggers(config_yaml_read, central_log_path, max_log_
             # Calls function to setup logging and create the tracker logger.
             container_logger = create_logger(central_log_path, logger_name, container_log_name, max_log_file_size, file_log_level, console_log_level, logging_backup_log_count, logging_format_option, logging_handler_option, rollover)
 
-            # Takes the docker container name/logger and creates a single multidimensional list entry.
-            docker_container_loggers.append([container_name, container_logger])
+            # Takes the docker container name, container logger, and optional exclude entries and creates a single multidimensional list entry.
+            docker_container_loggers.append([container_name, container_logger, exclude])
 
         except Exception as err:
             raise ValueError(f'The logger creation for the docker container ({container_name}) failed to create. {err}, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
@@ -445,7 +481,7 @@ def main():
     try:
 
         # Calls function to monitor the docker logs.
-        # Example REturn: [[{'Status': 'Started', 'container_name': 'MySoftware1'}], [{'Status': 'Started', 'container_name': 'MySoftware2'}]]
+        # Example Return: [[{'Status': 'Started', 'container_name': 'MySoftware1'}], [{'Status': 'Started', 'container_name': 'MySoftware2'}]]
         thread_status = create_docker_log_threads(docker_container_loggers, root_logger)
 
         # Sets count on total entries found
