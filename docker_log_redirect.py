@@ -536,7 +536,8 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. \
+                                                This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
                 
                 # Checks if the user entered an incorrect program entry.
                 elif 'The system cannot find the file specified' in str(err): 
@@ -551,7 +552,9 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Docker Redirect Command Failed To Run", f'The system cannot find the file specified while attempting to run the following '
+                                                'sub-process {subprocess_command}. Please ensure your host running this program has Docker installed, and the running user has permission to the '
+                                                'docker socket. The docker container will be re-checked in 1 hour.', root_logger)
 
                 # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
                 elif 'The sub-process' in str(err):
@@ -566,7 +569,9 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Docker Redirect Command Failed To Run", f'The system countered the following error ({err}) while running the following sub-process '
+                                                '{subprocess_command}. Please ensure your host running this program has Docker installed, and the running user has permission to the docker socket. The docker '
+                                                'container will be re-checked in 1 hour.', root_logger)
 
                 else:
 
@@ -606,7 +611,8 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
-            root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.')
+            root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. Please ensure your host running this program has Docker installed, '
+                                'and the running user has permission to the docker socket. The docker container will be re-checked in 1 hour.')
         
         # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
         elif 'The sub-process' in str(err):
@@ -619,7 +625,8 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
-            root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.')
+            root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. Please ensure your host running this program has Docker installed, '
+                                'and the running user has permission to the docker socket. The docker container will be re-checked in 1 hour.')
         
         else:
             
