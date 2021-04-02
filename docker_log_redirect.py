@@ -29,7 +29,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.5'
+__version__ = '0.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -98,7 +98,7 @@ def get_docker_log(container_name, container_logger, exclude, root_logger):
                 container_logger.info(line)
 
     except Exception as err:
-        raise ValueError(f'The sub-process failed to run. {err}, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
+        raise ValueError(f'The sub-process ({processing_args}) failed to run. {err}, Originating error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
 
 
 def create_docker_log_threads(docker_container_loggers, root_logger):
@@ -512,18 +512,10 @@ def main():
 
     except ValueError as err:
 
-        print(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|{err}, Error on line {format(sys.exc_info()[-1].tb_lineno)} in <{__name__}>')
-
         ###########################################################
         # Currently the program is exiting on any discovered error. 
         ###########################################################
 
-        # System exit print output for general setup
-        print(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|{err}')
-        print(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Info|See log for more details. You may need to enable debugging for more information.')
-
-        root_logger.error(f'{err}')
-        
         # Checking if the user chooses not to send program errors to email.
         if alert_program_errors == True and email_alerts == True:
 
@@ -534,8 +526,8 @@ def main():
                 # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific email. Timeouts on the thread do not mean the program needs to stop because other threads may run.
                 if 'timeout has reached' in str(err):
                     
-                    # Pulls the thread name using regex.
-                    # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
+                    # Pulls the thread name using regex. The A-Za-z0-9_ is used to match contiguous letters, numbers, or underscores.
+                    # Err Example: 2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>
                     # Result: transmission_thread
                     result = re.search(r"\(([A-Za-z0-9_]+)\)", str(err))
 
@@ -546,11 +538,41 @@ def main():
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
                     send_email(email_settings, "Docker Log Redirect - Docker Container Not Outputting", f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour.', root_logger)
                 
+                # Checks if the user entered an incorrect program entry.
+                elif 'The system cannot find the file specified' in str(err): 
+                    
+                    # Pulls the subprocess entry name using regex. The .* is used to match any character between ().
+                    # Err Example: 2021-04-02 12:33:16|Error|The sub-process (['docker', 'logs', '-f', 'MySoftware1']) failed to run. [WinError 2] The system cannot find the file specified, Originating error on line 57 in <__main__>, Error on line 126 in <ictoolkit.directors.thread_director>, Error on line 149 in <__main__> (Module:docker_log_redirect, Function:main,  Line:525)
+                    # Result: 'docker', 'logs', '-f', 'MySoftware1'
+                    result = re.search(r"\(.*\)", str(err))
+     
+                    # Sets the matching result.
+                    subprocess_command = result.group(0)
+
+                    # Calls function to send the email.
+                    # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
+                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.', root_logger)
+
+                # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
+                elif 'The sub-process' in str(err):
+                    
+                    # Pulls the subprocess entry name using regex. The .* is used to match any character between ().
+                    # Err Example: 2021-04-02 12:33:16|Error|The sub-process (['docker', 'logs', '-f', 'MySoftware1']) failed to run, Originating error on line 57 in <__main__>, Error on line 126 in <ictoolkit.directors.thread_director>, Error on line 149 in <__main__> (Module:docker_log_redirect, Function:main,  Line:525)
+                    # Result: 'docker', 'logs', '-f', 'MySoftware1'
+                    result = re.search(r"\(.*\)", str(err))
+     
+                    # Sets the matching result.
+                    subprocess_command = result.group(0)
+
+                    # Calls function to send the email.
+                    # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
+                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.', root_logger)
+
                 else:
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect Program Issue Occured", f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|Exception Thrown|{err}', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Program Issue Occured", f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}|Error|Exception Thrown|{err}', root_logger)
 
             except Exception as err:
                 root_logger.error(f'{err}')
@@ -563,8 +585,8 @@ def main():
         # Checks if a thread exception error containing 'timeout has reached' was throw to create a specific log. Timeouts on the thread do not mean the program needs to stop because other threads may run.
         if 'timeout has reached' in str(err):
             
-            # Pulls the thread name using regex.
-            # Err Example: '2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>'
+            # Pulls the thread name using regex. The A-Za-z0-9_ is used to match contiguous letters, numbers, or underscores.
+            # Err Example: 2021-04-01 09:39:39|Error|Exception Thrown|Thread (transmission_thread) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line 133 in , Error on line 150 in <__main__>
             # Result: transmission_thread
             result = re.search(r"\(([A-Za-z0-9_]+)\)", str(err))
 
@@ -573,8 +595,35 @@ def main():
 
             root_logger.error(f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour')
 
-        else:
+        # Checks if the user entered an incorrect program entry.
+        elif 'The system cannot find the file specified' in str(err): 
 
+            # Pulls the subprocess entry name using regex. The .* is used to match any character between ().
+            # Err Example: 2021-04-02 12:33:16|Error|The sub-process (['docker', 'logs', '-f', 'MySoftware1']) failed to run. [WinError 2] The system cannot find the file specified, Originating error on line 57 in <__main__>, Error on line 126 in <ictoolkit.directors.thread_director>, Error on line 149 in <__main__> (Module:docker_log_redirect, Function:main,  Line:525)
+            # Result: 'docker', 'logs', '-f', 'MySoftware1'
+            result = re.search(r"\(.*\)", str(err))
+
+            # Sets the matching result.
+            subprocess_command = result.group(0)
+
+            root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.')
+        
+        # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
+        elif 'The sub-process' in str(err):
+            
+            # Pulls the subprocess entry name using regex. The .* is used to match any character between ().
+            # Err Example: 2021-04-02 12:33:16|Error|The sub-process (['docker', 'logs', '-f', 'MySoftware1']) failed to run, Originating error on line 57 in <__main__>, Error on line 126 in <ictoolkit.directors.thread_director>, Error on line 149 in <__main__> (Module:docker_log_redirect, Function:main,  Line:525)
+            # Result: 'docker', 'logs', '-f', 'MySoftware1'
+            result = re.search(r"\(.*\)", str(err))
+
+            # Sets the matching result.
+            subprocess_command = result.group(0)
+
+            root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.')
+        
+        else:
+            
+            root_logger.error(f'{err}')
             root_logger.error('Exiting because of the critical exception error. If the program is running as a service that autostarts, this error will continue to prompt after each restart')
 
             exit()
