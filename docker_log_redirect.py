@@ -29,7 +29,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.6'
+__version__ = '0.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -551,7 +551,7 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.', root_logger)
 
                 # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
                 elif 'The sub-process' in str(err):
@@ -566,7 +566,7 @@ def main():
 
                     # Calls function to send the email.
                     # Calling Example: send_email(<Dictionary: email settings>, <Subject>, <Issue Message To Send>, <configured logger>)
-                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.', root_logger)
+                    send_email(email_settings, "Docker Log Redirect - Sub-process Failed To Run", f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.', root_logger)
 
                 else:
 
@@ -606,7 +606,7 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
-            root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.')
+            root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.')
         
         # Checks if the user entered a subprocess that didn't get flagged by an incorrect program entry.
         elif 'The sub-process' in str(err):
@@ -619,7 +619,7 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
-            root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referencable.. The docker container will be re-checked in 1 hour.')
+            root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. This error can happen because of a typo, or the calling program is not referenceable. The docker container will be re-checked in 1 hour.')
         
         else:
             
