@@ -29,7 +29,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, docker_log_redirect'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '0.7'
+__version__ = '0.9'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -598,6 +598,7 @@ def main():
             # Sets the matching result.
             thread_name = result.group(1)
 
+            root_logger.error(f'{err}')
             root_logger.error(f'The docker container logs for the thread \"{thread_name}\" have stopped outputting. This can happen with the docker container stops running. The docker container will be re-checked in 1 hour')
 
         # Checks if the user entered an incorrect program entry.
@@ -611,6 +612,7 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
+            root_logger.error(f'{err}')
             root_logger.error(f'The system cannot find the file specified while attempting to run the following sub-process {subprocess_command}. Please ensure your host running this program has Docker installed, '
                                 'and the running user has permission to the docker socket. The docker container will be re-checked in 1 hour.')
         
@@ -625,6 +627,7 @@ def main():
             # Sets the matching result.
             subprocess_command = result.group(0)
 
+            root_logger.error(f'{err}')
             root_logger.error(f'The system countered the following error ({err}) while running the following sub-process {subprocess_command}. Please ensure your host running this program has Docker installed, '
                                 'and the running user has permission to the docker socket. The docker container will be re-checked in 1 hour.')
         
